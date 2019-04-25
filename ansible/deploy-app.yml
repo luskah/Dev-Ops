@@ -1,0 +1,79 @@
+---
+- hosts: haproxy
+  become: true
+  roles:
+    - role: haproxy
+
+
+- hosts: mongodb
+  become: yes
+  name: Include mongodb
+  roles:
+    - role: mongo
+      vars:
+        # mongo version to use when installing via yum, ignored when installing from rpm files
+        mongo_version: 3.6
+
+        # name of the mongo process
+        mongo_process_name: mongod
+
+        # location of the database files
+        mongo_db_dir: /data/db
+
+        # location of the configuration file
+        mongo_conf_file: "/etc/mongod.conf"
+
+        #location of the pid file
+        mongo_pid_file: "/var/run/mongodb/mongod.pid"
+
+        #location of the log file
+        mongo_log_path: "/var/log/mongodb/mongod.log"
+
+        # Mongo port
+        mongo_port: 27017
+
+        # Mongo logging properties
+        mongo_log_append: false
+        mongo_log_rotate: rename
+        mongo_log_verbosity: 0
+
+        # Determines whether the process should be forked
+        mongo_fork_process: true
+
+        mongo_cluster_role: shardsvr
+
+        mongo_authorization: disabled
+
+        # Whether to perform selinux-specific configuration, default is true
+        selinux_enabled: true
+
+        # ssl properties:
+        mongo_ssl_enabled: false
+
+
+
+- hosts: elasticsearch
+  become: yes
+  name: Include elasticsearch master
+  roles:
+    - role: elastic.elasticsearch
+      vars:
+        es_instance_name: "node1"
+        es_config:
+          node.name: "node1"
+          cluster.name: "custom-cluster"
+          discovery.zen.ping.unicast.hosts: "localhost:9200"
+          http.port: 9200
+          transport.tcp.port: 9200
+          node.data: false
+          node.master: true
+          bootstrap.memory_lock: true
+        es_version_lock: false
+        es_heap_size: 1g
+        es_api_port: 9200
+        es_xpack_features: []
+
+- hosts: apps
+  become: yes
+  roles:
+    - role: data-engineering-app
